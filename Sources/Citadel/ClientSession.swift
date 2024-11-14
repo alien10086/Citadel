@@ -76,8 +76,8 @@ final class SSHClientSession {
         )
         var clientConfiguration = SSHClientConfiguration(
             userAuthDelegate: authenticationMethod(),
-            serverAuthDelegate: hostKeyValidator,
-            globalRequestDelegate:  RemotePortForwarderGlobalRequestDelegate()
+            serverAuthDelegate: hostKeyValidator
+//            globalRequestDelegate:  RemotePortForwarderGlobalRequestDelegate()
 //            globalRequestDelegate: RemotePortForwarderGlobalRequestDelegate()
         )
         
@@ -131,7 +131,8 @@ final class SSHClientSession {
         )
         var clientConfiguration = SSHClientConfiguration(
             userAuthDelegate: authenticationMethod(),
-            serverAuthDelegate: hostKeyValidator
+            serverAuthDelegate: hostKeyValidator,
+            globalRequestDelegate:  RemotePortForwarderGlobalRequestDelegate()
         )
         
         algorithms.apply(to: &clientConfiguration)
