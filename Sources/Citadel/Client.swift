@@ -236,8 +236,12 @@ public final class SSHClient {
         return client
     }
     
-    public func startforwaridingListen() throws {
+    public func startforwaridingListen(){
+        do {
         let response = try session.startforwaridingListen()
+        } catch {
+            print("567575: \(error)")
+        }
     }
 
     public func endforwaridingListen() throws {
