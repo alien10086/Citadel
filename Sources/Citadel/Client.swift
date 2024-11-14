@@ -236,16 +236,13 @@ public final class SSHClient {
         return client
     }
     
-    public func startforwaridingListen(){
-        do {
-        let response = try session.startforwaridingListen()
-        } catch {
-            print("567575: \(error)")
-        }
+    public func startforwaridingListen() async throws ->GlobalRequest.TCPForwardingResponse?{
+        return try await session.startforwaridingListen()
+
     }
 
-    public func endforwaridingListen() throws {
-        let response = try session.endforwaridingListen()
+    public func endforwaridingListen() async throws ->GlobalRequest.TCPForwardingResponse? {
+        return try await session.endforwaridingListen()
     }
 
     
