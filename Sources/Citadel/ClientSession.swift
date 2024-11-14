@@ -34,6 +34,8 @@ final class ClientHandshakeHandler: ChannelInboundHandler {
     }
 }
 
+
+
 final class SSHClientSession {
     let channel: Channel
     let sshHandler: NIOSSHHandler
@@ -43,17 +45,17 @@ final class SSHClientSession {
         self.sshHandler = sshHandler
     }
     
-    func startforwaridingListen() async throws -> GlobalRequest.TCPForwardingResponse? {
-        let promise = channel.eventLoop.makePromise(of: GlobalRequest.TCPForwardingResponse?.self)
-        sshHandler.sendTCPForwardingRequest(.listen(host: "127.0.0.1", port: 6000), promise: promise)
-        return try await promise.futureResult.get()
-    }
-
-    func endforwaridingListen() async throws -> GlobalRequest.TCPForwardingResponse? {
-        let promise = channel.eventLoop.makePromise(of: GlobalRequest.TCPForwardingResponse?.self)
-        sshHandler.sendTCPForwardingRequest(.cancel(host: "127.0.0.1", port: 6000), promise: promise)
-        return try await promise.futureResult.get()
-    }
+//    func startforwaridingListen() async throws -> GlobalRequest.TCPForwardingResponse? {
+//        let promise = channel.eventLoop.makePromise(of: GlobalRequest.TCPForwardingResponse?.self)
+//        sshHandler.sendTCPForwardingRequest(.listen(host: "127.0.0.1", port: 6000), promise: promise)
+//        return try await promise.futureResult.get()
+//    }
+//
+//    func endforwaridingListen() async throws -> GlobalRequest.TCPForwardingResponse? {
+//        let promise = channel.eventLoop.makePromise(of: GlobalRequest.TCPForwardingResponse?.self)
+//        sshHandler.sendTCPForwardingRequest(.cancel(host: "127.0.0.1", port: 6000), promise: promise)
+//        return try await promise.futureResult.get()
+//    }
     
     /// Creates a new SSH session on the given channel. This allows you to use an existing channel for the SSH session.
     /// - authenticationMethod: The authentication method to use, see `SSHAuthenticationMethod`.
@@ -74,7 +76,9 @@ final class SSHClientSession {
         )
         var clientConfiguration = SSHClientConfiguration(
             userAuthDelegate: authenticationMethod(),
-            serverAuthDelegate: hostKeyValidator
+            serverAuthDelegate: hostKeyValidator,
+            globalRequestDelegate:  RemotePortForwarderGlobalRequestDelegate()
+//            globalRequestDelegate: RemotePortForwarderGlobalRequestDelegate()
         )
         
         algorithms.apply(to: &clientConfiguration)
