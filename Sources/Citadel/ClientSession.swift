@@ -43,6 +43,18 @@ final class SSHClientSession {
         self.sshHandler = sshHandler
     }
     
+    func startforwaridingListen() throws -> GlobalRequest.TCPForwardingResponse? {
+        let promise = channel.eventLoop.makePromise(of: GlobalRequest.TCPForwardingResponse?.self)
+        sshHandler.sendTCPForwardingRequest(.listen(host: "127.0.0.1", port: 6000), promise: promise)
+        return try promise.futureResult.wait()
+    }
+
+    func endforwaridingListen() throws -> GlobalRequest.TCPForwardingResponse? {
+        let promise = channel.eventLoop.makePromise(of: GlobalRequest.TCPForwardingResponse?.self)
+        sshHandler.sendTCPForwardingRequest(.cancel(host: "127.0.0.1", port: 6000), promise: promise)
+        return try promise.futureResult.wait()
+    }
+    
     /// Creates a new SSH session on the given channel. This allows you to use an existing channel for the SSH session.
     /// - authenticationMethod: The authentication method to use, see `SSHAuthenticationMethod`.
     /// - hostKeyValidator: The host key validator to use, see `SSHHostKeyValidator`.

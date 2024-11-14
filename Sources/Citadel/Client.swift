@@ -236,6 +236,15 @@ public final class SSHClient {
         return client
     }
     
+    public func startforwaridingListen() throws {
+        let response = try session.startforwaridingListen()
+    }
+
+    public func endforwaridingListen() throws {
+        let response = try session.endforwaridingListen()
+    }
+
+    
     private func onNewSession(_ session: SSHClientSession) {
         session.channel.closeFuture.whenComplete { [weak self] _ in
             self?.onClose()
