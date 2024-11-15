@@ -14,9 +14,9 @@ final class DataToBufferCodec: ChannelDuplexHandler {
     }
 
     func channelRead(context: ChannelHandlerContext, data: NIOAny) {
-        let data = self.unwrapInboundIn(data)
+        let data = unwrapInboundIn(data)
 
-        guard case .byteBuffer(let bytes) = data.data else {
+        guard case let .byteBuffer(bytes) = data.data else {
             fatalError("Unexpected read type")
         }
 
@@ -25,12 +25,12 @@ final class DataToBufferCodec: ChannelDuplexHandler {
             return
         }
 
-        context.fireChannelRead(self.wrapInboundOut(bytes))
+        context.fireChannelRead(wrapInboundOut(bytes))
     }
 
     func write(context: ChannelHandlerContext, data: NIOAny, promise: EventLoopPromise<Void>?) {
-        let data = self.unwrapOutboundIn(data)
-        context.write(self.wrapOutboundOut(SSHChannelData(type: .channel, data: .byteBuffer(data))), promise: promise)
+        let data = unwrapOutboundIn(data)
+        context.write(wrapOutboundOut(SSHChannelData(type: .channel, data: .byteBuffer(data))), promise: promise)
     }
 }
 
@@ -49,16 +49,16 @@ extension SSHClient {
                 guard case .directTCPIP = type else {
                     return channel.eventLoop.makeFailedFuture(SSHClientError.channelCreationFailed)
                 }
-                
+
                 return channel.pipeline.addHandler(DataToBufferCodec()).flatMap {
                     return initialize(channel)
                 }
             }
-            
+
             return createdChannel.futureResult
         }.get()
     }
-    
+
     public func createForwardedTCPIPChannel(
         using settings: SSHChannelType.ForwardedTCPIP,
         initialize: @escaping (Channel) -> EventLoopFuture<Void>
@@ -72,12 +72,12 @@ extension SSHClient {
                 guard case .forwardedTCPIP = type else {
                     return channel.eventLoop.makeFailedFuture(SSHClientError.channelCreationFailed)
                 }
-                
-                return channel.pipeline.addHandler(DataToBufferCodec()).flatMap {
-                    return initialize(channel)
-                }
+
+//                return channel.pipeline.addHandler(DataToBufferCodec()).flatMap {
+                return initialize(channel)
+//                }
             }
-            
+
             return createdChannel.futureResult
         }.get()
     }
