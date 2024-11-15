@@ -10,18 +10,18 @@ public struct TTYSTDError: Error {
 public struct ExecCommandStream {
     public let stdout: AsyncThrowingStream<ByteBuffer, Error>
     public let stderr: AsyncThrowingStream<ByteBuffer, Error>
-    
+
     struct Continuation {
         let stdout: AsyncThrowingStream<ByteBuffer, Error>.Continuation
         let stderr: AsyncThrowingStream<ByteBuffer, Error>.Continuation
-        
+
         func onOutput(_ output: ExecCommandHandler.Output) {
             switch output {
-            case .stdout(let buffer):
+            case let .stdout(buffer):
                 stdout.yield(buffer)
-            case .stderr(let buffer):
+            case let .stderr(buffer):
                 stderr.yield(buffer)
-            case .eof(let error):
+            case let .eof(error):
                 stdout.finish(throwing: error)
                 stderr.finish(throwing: error)
             case .channelSuccess:
@@ -29,7 +29,7 @@ public struct ExecCommandStream {
             case .exit(0):
                 stdout.finish()
                 stderr.finish()
-            case .exit(let status):
+            case let .exit(status):
                 stdout.finish(throwing: SSHClient.CommandFailed(exitCode: status))
                 stderr.finish(throwing: SSHClient.CommandFailed(exitCode: status))
             }
@@ -80,7 +80,12 @@ public struct TTYStdinWriter {
         try await channel.writeAndFlush(SSHChannelData(type: .channel, data: .byteBuffer(buffer)))
     }
 
-    public func changeSize(cols: Int, rows: Int, pixelWidth:Int, pixelHeight:Int) async throws {
+    public func forwordtcp(remoteHost: String, port: Int) async throws {
+        try await channel.triggerUserOutboundEvent(
+            GlobalRequest.TCPForwardingRequest.listen(host: remoteHost, port: port))
+    }
+
+    public func changeSize(cols: Int, rows: Int, pixelWidth: Int, pixelHeight: Int) async throws {
         try await channel.triggerUserOutboundEvent(
             SSHChannelRequestEvent.WindowChangeRequest(
                 terminalCharacterWidth: cols,
@@ -100,7 +105,7 @@ final class ExecCommandHandler: ChannelDuplexHandler {
         case eof(Error?)
         case exit(Int)
     }
-    
+
     typealias InboundIn = SSHChannelData
     typealias InboundOut = ByteBuffer
     typealias OutboundIn = ByteBuffer
@@ -116,7 +121,7 @@ final class ExecCommandHandler: ChannelDuplexHandler {
         self.logger = logger
         self.onOutput = onOutput
     }
-    
+
     func handlerAdded(context: ChannelHandlerContext) {
         context.channel.setOption(ChannelOptions.allowRemoteHalfClosure, value: true).whenFailure { error in
             context.fireErrorCaught(error)
@@ -141,13 +146,13 @@ final class ExecCommandHandler: ChannelDuplexHandler {
     }
 
     func channelRead(context: ChannelHandlerContext, data: NIOAny) {
-        let data = self.unwrapInboundIn(data)
+        let data = unwrapInboundIn(data)
 
-        guard case .byteBuffer(let buffer) = data.data else {
+        guard case let .byteBuffer(buffer) = data.data else {
             logger.error("Unable to process channelData for executed command. Data was not a ByteBuffer")
             return onOutput(context.channel, .eof(SSHExecError.invalidData))
         }
-        
+
         switch data.type {
         case .channel:
             onOutput(context.channel, .stdout(buffer))
@@ -158,7 +163,7 @@ final class ExecCommandHandler: ChannelDuplexHandler {
             ()
         }
     }
-    
+
     func errorCaught(context: ChannelHandlerContext, error: Error) {
         onOutput(context.channel, .eof(error))
     }
@@ -174,7 +179,7 @@ extension SSHClient {
     /// - command: The command to execute.
     /// - maxResponseSize: The maximum size of the response. If the response is larger, the command will fail.
     /// - mergeStreams: If the answer should also include stderr.
-    /// - inShell:  Whether to request the remote server to start a shell before executing the command. 
+    /// - inShell:  Whether to request the remote server to start a shell before executing the command.
     public func executeCommand(
         _ command: String,
         maxResponseSize: Int = .max,
@@ -186,13 +191,13 @@ extension SSHClient {
 
         for try await chunk in stream {
             switch chunk {
-            case .stderr(let chunk):
+            case let .stderr(chunk):
                 guard mergeStreams else {
                     continue
                 }
 
                 fallthrough
-            case .stdout(let chunk):
+            case let .stdout(chunk):
                 let newResponseSize = chunk.readableBytes + result.readableBytes
 
                 if newResponseSize > maxResponseSize {
@@ -236,11 +241,11 @@ extension SSHClient {
 
         let handler = ExecCommandHandler(logger: logger) { channel, output in
             switch output {
-            case .stdout(let stdout):
+            case let .stdout(stdout):
                 streamContinuation.yield(.stdout(stdout))
-            case .stderr(let stderr):
+            case let .stderr(stderr):
                 streamContinuation.yield(.stderr(stderr))
-            case .eof(let error):
+            case let .eof(error):
                 if let error {
                     streamContinuation.finish(throwing: error)
                 } else if let exitCode, exitCode != 0 {
@@ -249,7 +254,7 @@ extension SSHClient {
                     streamContinuation.finish()
                 }
             case .channelSuccess:
-                if case .tty(.some(let command)) = mode, !hasReceivedChannelSuccess {
+                if case let .tty(.some(command)) = mode, !hasReceivedChannelSuccess {
                     let commandData = SSHChannelData(
                         type: .channel,
                         data: .byteBuffer(ByteBuffer(string: command + ";exit\n"))
@@ -257,7 +262,7 @@ extension SSHClient {
                     channel.writeAndFlush(commandData, promise: nil)
                     hasReceivedChannelSuccess = true
                 }
-            case .exit(let status):
+            case let .exit(status):
                 exitCode = status
             }
         }
@@ -280,20 +285,20 @@ extension SSHClient {
         }
 
         switch mode {
-        case .pty(let request):
+        case let .pty(request):
             try await channel.triggerUserOutboundEvent(request)
             fallthrough
         case .tty:
             try await channel.triggerUserOutboundEvent(SSHChannelRequestEvent.ShellRequest(
                 wantReply: true
             ))
-        case .command(let command):
+        case let .command(command):
             try await channel.triggerUserOutboundEvent(SSHChannelRequestEvent.ExecRequest(
                 command: command,
                 wantReply: true
             ))
         }
-        
+
         return (channel, stream)
     }
 
@@ -355,28 +360,28 @@ extension SSHClient {
         let stdout = AsyncThrowingStream<ByteBuffer, Error>(bufferingPolicy: .unbounded) { continuation in
             stdoutContinuation = continuation
         }
-        
+
         let stderr = AsyncThrowingStream<ByteBuffer, Error>(bufferingPolicy: .unbounded) { continuation in
             stderrContinuation = continuation
         }
-        
+
         let handler = ExecCommandStream.Continuation(
             stdout: stdoutContinuation,
             stderr: stderrContinuation
         )
-        
+
         Task {
             do {
                 let stream = try await executeCommandStream(command, inShell: inShell)
                 for try await chunk in stream {
                     switch chunk {
-                    case .stdout(let buffer):
+                    case let .stdout(buffer):
                         handler.stdout.yield(buffer)
-                    case .stderr(let buffer):
+                    case let .stderr(buffer):
                         handler.stderr.yield(buffer)
                     }
                 }
-                
+
                 handler.stdout.finish()
                 handler.stderr.finish()
             } catch {
@@ -384,7 +389,7 @@ extension SSHClient {
                 handler.stderr.finish(throwing: error)
             }
         }
-        
+
         return ExecCommandStream(stdout: stdout, stderr: stderr)
     }
 }

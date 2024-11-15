@@ -45,11 +45,12 @@ final class SSHClientSession {
         self.sshHandler = sshHandler
     }
     
-    func startforwaridingListen() async throws -> GlobalRequest.TCPForwardingResponse? {
-        let promise = channel.eventLoop.makePromise(of: GlobalRequest.TCPForwardingResponse?.self)
-        sshHandler.sendTCPForwardingRequest(.listen(host: "127.0.0.1", port: 6000), promise: promise)
-        return try await promise.futureResult.get()
-    }
+//    func startforwaridingListen() async throws -> GlobalRequest.TCPForwardingResponse? {
+//        channel.
+//        let promise = channel.eventLoop.makePromise(of: GlobalRequest.TCPForwardingResponse?.self)
+//        sshHandler.sendTCPForwardingRequest(.listen(host: "127.0.0.1", port: 6000), promise: promise)
+//        return try await promise.futureResult.get()
+//    }
 //
 //    func endforwaridingListen() async throws -> GlobalRequest.TCPForwardingResponse? {
 //        let promise = channel.eventLoop.makePromise(of: GlobalRequest.TCPForwardingResponse?.self)
