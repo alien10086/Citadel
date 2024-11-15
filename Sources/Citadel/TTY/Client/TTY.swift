@@ -81,8 +81,12 @@ public struct TTYStdinWriter {
     }
 
     public func forwordtcp(remoteHost: String, port: Int) async throws {
-        try await channel.triggerUserOutboundEvent(
-            GlobalRequest.TCPForwardingRequest.listen(host: remoteHost, port: port))
+//        SSHMessage.GlobalRequestMessage.RequestType(GlobalRequest.TCPForwardingRequest.listen(host: remoteHost, port: port))
+     
+//        try await channel.writeAndFlush(NIOAny(buffer), promise: nil)
+//        try await channel.triggerUserOutboundEvent(
+//          
+//            GlobalRequest.TCPForwardingRequest.listen(host: remoteHost, port: port))
     }
 
     public func changeSize(cols: Int, rows: Int, pixelWidth: Int, pixelHeight: Int) async throws {

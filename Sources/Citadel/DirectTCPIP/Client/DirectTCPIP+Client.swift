@@ -58,4 +58,27 @@ extension SSHClient {
             return createdChannel.futureResult
         }.get()
     }
+    
+    public func createForwardedTCPIPChannel(
+        using settings: SSHChannelType.ForwardedTCPIP,
+        initialize: @escaping (Channel) -> EventLoopFuture<Void>
+    ) async throws -> Channel {
+        return try await eventLoop.flatSubmit {
+            let createdChannel = self.eventLoop.makePromise(of: Channel.self)
+            self.session.sshHandler.createChannel(
+                createdChannel,
+                channelType: .forwardedTCPIP(settings)
+            ) { channel, type in
+                guard case .forwardedTCPIP = type else {
+                    return channel.eventLoop.makeFailedFuture(SSHClientError.channelCreationFailed)
+                }
+                
+                return channel.pipeline.addHandler(DataToBufferCodec()).flatMap {
+                    return initialize(channel)
+                }
+            }
+            
+            return createdChannel.futureResult
+        }.get()
+    }
 }
