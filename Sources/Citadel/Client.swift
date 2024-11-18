@@ -236,10 +236,10 @@ public final class SSHClient {
         return client
     }
     
-//    public func startforwaridingListen() async throws ->GlobalRequest.TCPForwardingResponse?{
-//        return try await session.startforwaridingListen()
-//
-//    }
+    public func startforwaridingListen() async throws ->GlobalRequest.TCPForwardingResponse?{
+        return try await session.startforwaridingListen()
+
+    }
 //
 //    public func endforwaridingListen() async throws ->GlobalRequest.TCPForwardingResponse? {
 //        return try await session.endforwaridingListen()
