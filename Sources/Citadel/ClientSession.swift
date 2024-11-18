@@ -45,8 +45,7 @@ final class SSHClientSession {
         self.sshHandler = sshHandler
     }
     
-    func startforwaridingListen() async throws -> GlobalRequest.TCPForwardingResponse? {
-        let promise = channel.eventLoop.makePromise(of: GlobalRequest.TCPForwardingResponse?.self)
+    func startforwaridingListen(promise: EventLoopPromise<GlobalRequest.TCPForwardingResponse?>) async throws -> GlobalRequest.TCPForwardingResponse? {
         sshHandler.sendTCPForwardingRequest(.listen(host: "127.0.0.1", port: 6000), promise: promise)
         return try await promise.futureResult.get()
     }

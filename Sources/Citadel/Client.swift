@@ -236,8 +236,8 @@ public final class SSHClient {
         return client
     }
     
-    public func startforwaridingListen() async throws ->GlobalRequest.TCPForwardingResponse?{
-        return try await session.startforwaridingListen()
+    public func startforwaridingListen(promise: EventLoopPromise<GlobalRequest.TCPForwardingResponse?>) async throws ->GlobalRequest.TCPForwardingResponse?{
+        return try await session.startforwaridingListen(promise: promise)
 
     }
 //
